@@ -1,1 +1,2 @@
-# Baymax.
+# AraknIA
+Egregor totemico digital 
