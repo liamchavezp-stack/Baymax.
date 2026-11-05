@@ -256,7 +256,10 @@ def procesar_respuesta(user_input):
         full_response = ""
         try:
             mensajes_api = [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.messages
-            stream = client.chat.completions.create(model="llama-3.1-8b-instant", messages=mensajes_api, stream=True)
+            
+            # Aquí está el modelo corregido a llama3-8b-8192
+            stream = client.chat.completions.create(model="llama3-8b-8192", messages=mensajes_api, stream=True)
+            
             for chunk in stream:
                 if chunk.choices[0].delta.content is not None:
                     full_response += chunk.choices[0].delta.content
