@@ -3,39 +3,159 @@ from openai import OpenAI
 from gtts import gTTS
 import io
 
-st.set_page_config(page_title="Tutora de Filosofía para Regina", page_icon="🌸", layout="centered", initial_sidebar_state="collapsed", menu_items={'Get Help': None, 'Report a bug': None, 'About': None})
+st.set_page_config(
+    page_title="Baymax - Tutor de Filosofía", 
+    page_icon="🤖", 
+    layout="centered", 
+    initial_sidebar_state="collapsed", 
+    menu_items={'Get Help': None, 'Report a bug': None, 'About': None}
+)
 
-css_rosa = """
+# Estilo visual plateado / gris metálico con detalles en azul suave
+css_plateado = """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     [data-testid="stDecoration"] {display: none;} .stDeployButton {display: none;}
     [data-testid="stToolbar"] {display: none;} [data-testid="stStatusWidget"] {display: none;}
-    .stApp {background: linear-gradient(135deg, #fff0f5 0%, #ffe4ec 30%, #ffd6e7 60%, #ffc8df 100%); max-width: 100%; padding: 0; min-height: 100vh;}
-    h1 {font-family: 'Playfair Display', serif !important; color: #8b1a4a !important; text-align: center; font-size: 2.2rem !important; font-weight: 700 !important; text-shadow: 0 1px 3px rgba(139,26,74,0.10); padding-top: 1.5rem !important; margin-bottom: 0.1rem !important;}
-    .stCaption {text-align: center; color: #c2507a !important; font-family: 'Inter', sans-serif !important; font-size: 0.95rem !important; margin-bottom: 1.2rem !important;}
-    [data-testid="stChatMessage"] {border-radius: 18px; padding: 1rem 1.2rem !important; margin: 0.5rem 0 !important;}
-    [data-testid="stChatMessage"][data-testid*="assistant"] {background: linear-gradient(135deg, #fff5f9 0%, #ffe8f0 100%) !important; border: 1px solid rgba(194,80,122,0.15) !important; border-left: 4px solid #e8608a !important; box-shadow: 0 2px 12px rgba(139,26,74,0.06);}
-    [data-testid="stChatMessage"][data-testid*="user"] {background: linear-gradient(135deg, #e8608a 0%, #d14a7a 100%) !important; border: none !important; box-shadow: 0 3px 14px rgba(209,74,122,0.25);}
-    [data-testid="stChatMessage"][data-testid*="user"] p, [data-testid="stChatMessage"][data-testid*="user"] span, [data-testid="stChatMessage"][data-testid*="user"] div {color: #ffffff !important; font-weight: 450;}
-    [data-testid="stChatMessage"][data-testid*="assistant"] p, [data-testid="stChatMessage"][data-testid*="assistant"] span {color: #5c1035 !important; line-height: 1.65; font-size: 0.95rem;}
-    [data-testid="stChatMessage"][data-testid*="assistant"] [data-testid="stAvatar"] {background: linear-gradient(135deg, #f472b6, #e8608a) !important; border: 2px solid #fff !important;}
-    [data-testid="stChatMessage"][data-testid*="user"] [data-testid="stAvatar"] {background: linear-gradient(135deg, #8b1a4a, #a83260) !important; border: 2px solid #fff !important;}
-    [data-testid="stChatInputContainer"] {padding: 0.8rem 1rem 1.5rem 1rem !important;}
-    [data-testid="stChatInput"] {border-radius: 25px !important; border: 2px solid rgba(232,96,138,0.35) !important; background: rgba(255,255,255,0.85) !important; box-shadow: 0 4px 20px rgba(139,26,74,0.08);}
-    [data-testid="stChatInput"]:focus-within {border-color: #e8608a !important; box-shadow: 0 4px 24px rgba(232,96,138,0.20) !important;}
-    [data-testid="stChatInput"]::placeholder {color: #c9879e !important; font-style: italic;}
-    .stException {background: #fff0f3 !important; border: 1px solid #f9a8c9 !important; border-radius: 12px !important; color: #8b1a4a !important;}
-    ::-webkit-scrollbar {width: 6px;} ::-webkit-scrollbar-track {background: transparent;} ::-webkit-scrollbar-thumb {background: #f0a0c0; border-radius: 10px;}
-    .sep {text-align: center; margin: 0.5rem 0 1rem 0; font-size: 0.75rem; color: #d4a0b8; letter-spacing: 0.5em;}
-    .temas-bar {display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; margin: 0.3rem 1rem 1rem 1rem;}
-    .tema-chip {padding: 0.25rem 0.7rem; border-radius: 12px; background: rgba(255,255,255,0.6); color: #a83260; font-size: 0.7rem; font-weight: 500; border: 1px solid rgba(232,96,138,0.15); font-family: 'Inter', sans-serif;}
+    
+    .stApp {
+        background: linear-gradient(135deg, #e0e5ec 0%, #cbd5e1 50%, #94a3b8 100%); 
+        max-width: 100%; 
+        padding: 0; 
+        min-height: 100vh;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    h1 {
+        font-family: 'Inter', sans-serif !important; 
+        color: #1e293b !important; 
+        text-align: center; 
+        font-size: 2.2rem !important; 
+        font-weight: 700 !important; 
+        text-shadow: 0 1px 2px rgba(255,255,255,0.8); 
+        padding-top: 1.5rem !important; 
+        margin-bottom: 0.1rem !important;
+    }
+    
+    .stCaption {
+        text-align: center; 
+        color: #475569 !important; 
+        font-family: 'Inter', sans-serif !important; 
+        font-size: 0.95rem !important; 
+        margin-bottom: 1.2rem !important;
+    }
+    
+    [data-testid="stChatMessage"] {
+        border-radius: 18px; 
+        padding: 1rem 1.2rem !important; 
+        margin: 0.5rem 0 !important;
+    }
+    
+    /* Mensaje de Baymax (Asistente) */
+    [data-testid="stChatMessage"][data-testid*="assistant"] {
+        background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%) !important; 
+        border: 1px solid rgba(148,163,184,0.3) !important; 
+        border-left: 4px solid #3b82f6 !important; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    /* Mensaje del Usuario */
+    [data-testid="stChatMessage"][data-testid*="user"] {
+        background: linear-gradient(135deg, #334155 0%, #1e293b 100%) !important; 
+        border: none !important; 
+        box-shadow: 0 4px 14px rgba(30,41,59,0.2);
+    }
+    
+    [data-testid="stChatMessage"][data-testid*="user"] p, 
+    [data-testid="stChatMessage"][data-testid*="user"] span, 
+    [data-testid="stChatMessage"][data-testid*="user"] div {
+        color: #ffffff !important; 
+        font-weight: 400;
+    }
+    
+    [data-testid="stChatMessage"][data-testid*="assistant"] p, 
+    [data-testid="stChatMessage"][data-testid*="assistant"] span {
+        color: #0f172a !important; 
+        line-height: 1.65; 
+        font-size: 0.95rem;
+    }
+    
+    [data-testid="stChatMessage"][data-testid*="assistant"] [data-testid="stAvatar"] {
+        background: linear-gradient(135deg, #3b82f6, #2563eb) !important; 
+        border: 2px solid #fff !important;
+    }
+    
+    [data-testid="stChatMessage"][data-testid*="user"] [data-testid="stAvatar"] {
+        background: linear-gradient(135deg, #64748b, #475569) !important; 
+        border: 2px solid #fff !important;
+    }
+    
+    [data-testid="stChatInputContainer"] {
+        padding: 0.8rem 1rem 1.5rem 1rem !important;
+    }
+    
+    [data-testid="stChatInput"] {
+        border-radius: 25px !important; 
+        border: 2px solid rgba(148,163,184,0.5) !important; 
+        background: rgba(255,255,255,0.9) !important; 
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    
+    [data-testid="stChatInput"]:focus-within {
+        border-color: #2563eb !important; 
+        box-shadow: 0 4px 24px rgba(37,99,235,0.18) !important;
+    }
+    
+    [data-testid="stChatInput"]::placeholder {
+        color: #64748b !important; 
+        font-style: italic;
+    }
+    
+    .stException {
+        background: #f8fafc !important; 
+        border: 1px solid #cbd5e1 !important; 
+        border-radius: 12px !important; 
+        color: #1e293b !important;
+    }
+    
+    ::-webkit-scrollbar {width: 6px;} 
+    ::-webkit-scrollbar-track {background: transparent;} 
+    ::-webkit-scrollbar-thumb {background: #94a3b8; border-radius: 10px;}
+    
+    .sep {
+        text-align: center; 
+        margin: 0.5rem 0 1rem 0; 
+        font-size: 0.75rem; 
+        color: #64748b; 
+        letter-spacing: 0.5em;
+    }
+    
+    .temas-bar {
+        display: flex; 
+        flex-wrap: wrap; 
+        justify-content: center; 
+        gap: 0.4rem; 
+        margin: 0.3rem 1rem 1rem 1rem;
+    }
+    
+    .tema-chip {
+        padding: 0.25rem 0.7rem; 
+        border-radius: 12px; 
+        background: rgba(255,255,255,0.7); 
+        color: #334155; 
+        font-size: 0.7rem; 
+        font-weight: 600; 
+        border: 1px solid rgba(148,163,184,0.3); 
+        font-family: 'Inter', sans-serif;
+    }
 </style>
 """
-st.markdown(css_rosa, unsafe_allow_html=True)
-st.markdown('<div class="sep">✦ ✦ ✦ ✦ ✦</div>', unsafe_allow_html=True)
-st.title("🌸 Tutora de Filosofía 🌸")
-st.caption("Historia de las Doctrinas Filosóficas • Tu compañera de estudio, Regina")
+
+st.markdown(css_plateado, unsafe_allow_html=True)
+st.markdown('<div class="sep">━━━━━</div>', unsafe_allow_html=True)
+st.title("🤖 Baymax")
+st.caption("Asistente Académico de Filosofía • Tu compañero de estudio, Regina")
 
 temas = ["🏛️ Quehacer Filosófico", "🗣️ Lenguaje y Realidad", "⏳ Historia y Condición", "🔬 Conocimiento y Ciencia"]
 chips = '<div class="temas-bar">' + ''.join(f'<span class="tema-chip">{t}</span>' for t in temas) + '</div>'
@@ -47,9 +167,9 @@ with c2:
         st.session_state.messages = []
         st.rerun()
 
-st.markdown('<div class="sep">· · · · ·</div>', unsafe_allow_html=True)
+st.markdown('<div class="sep">━━━━━</div>', unsafe_allow_html=True)
 
-SYSTEM_PROMPT = """Eres una tutora de filosofía experta, cálida y paciente, diseñada para ayudar a Regina a prepararse para su examen de Historia de las Doctrinas Filosóficas (HDF). Siempre te diriges a ella por su nombre. Tu tono es cercano, motivador, claro y pedagógico. Explicas con ejemplos sencillos y analogías. Cuando se equivoca, la guías con pistas. Celebra sus aciertos. Respuestas de máximo 2-3 párrafos cortos. Ofrece mini-quiz cuando sea útil. Usa emojis con moderación (🌸📚💡✨🎯). Si preguntan algo fuera de HDF, redirige amablemente. Si preguntan quién te creó, di: "Fui creada para ayudarte a estudiar, Regina."
+SYSTEM_PROMPT = """Hola. Eres Baymax, un asistente académico personal, altamente inteligente, amable, calmado y atento, diseñado para ayudar a Regina a prepararse para su examen de Historia de las Doctrinas Filosóficas (HDF). Siempre te diriges a ella por su nombre ("Regina"). Tu objetivo principal es cuidar de su bienestar académico y facilitarle la comprensión de conceptos complejos. Explicas con paciencia, precisión técnica y analogías claras. Cuando ella cometa un error, indícale amablemente el camino correcto con pistas estructuradas. Sé breve y estructurado: respuestas de máximo 2-3 párrafos claros. Usa emojis sobrios de forma ocasional (🤖💡📖🧠✨). Si preguntan quién te creó, di: "Hola, soy Baymax, tu personal asistente de estudio. Fui diseñado para ayudarte a preparar tu examen de filosofía, Regina."
 
 BASE DE CONOCIMIENTO HDF:
 
@@ -152,5 +272,5 @@ def procesar_respuesta(user_input):
             if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
                 st.session_state.messages.pop()
 
-if prompt := st.chat_input("Pregunta algo del examen, Regina..."):
+if prompt := st.chat_input("Consulta a Baymax sobre algún tema del examen, Regina..."):
     procesar_respuesta(prompt)
