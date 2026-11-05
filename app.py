@@ -16,9 +16,13 @@ with st.sidebar:
     st.markdown("### ⚙️ Ajustes de Baymax")
     modelo_elegido = st.selectbox(
         "Selecciona el modelo de Inteligencia Artificial:",
-        ("mixtral-8x7b-32768", "llama3-8b-8192")
+        (
+            "llama-3.3-70b-versatile", 
+            "gemma2-9b-it",
+            "llama-3.1-8b-instant"
+        )
     )
-    st.caption("💡 *Si el modelo llama3-8b-8192 te marca error 400 o 404, cambia a mixtral.*")
+    st.caption("💡 *Estos son los modelos más recientes y activos de Groq.*")
 
 # --- ESTILOS CSS ---
 css_plateado = """
@@ -217,72 +221,4 @@ Arendt: Banalidad del mal = el mal surge de personas ordinarias que cumplen órd
 Sartre - Existencialismo ateo: "La existencia precede a la esencia" = primero existimos, luego nos definimos; no hay naturaleza predeterminada. El humano está condenado a ser libre, debe construirse. Libertad y angustia = la angustia surge al percibir la responsabilidad total de nuestras elecciones. Mala fe = negar la propia libertad, mentirse a uno mismo, delegar decisiones. "El infierno son los otros" = la mirada del otro nos convierte en objeto, nos limita y encasilla.
 
 PARTE 4: Alcances del conocimiento y vida en común.
-Kant: Noúmeno = cosa en sí, incognoscible. Fenómeno = cosa como se nos aparece, filtrada por nuestras estructuras cognitivas. Juicios a priori = independientes de la experiencia. Juicios a posteriori = derivados de la experiencia.
-Hume/Empirismo: Impresión sensible = dato inmediato de la experiencia. Idea simple = copia debilitada de una impresión. Idea compleja = combinación de ideas simples.
-Método Analítico-Sintético: Analítico = descomponer todo en partes. Sintético = reconstruir el todo desde las partes. Se usan complementariamente.
-Conocimiento científico vs creencia: Científico es verificable, falible, metódico, objetivo, comunicable.
-Popper: Falsabilidad = criterio de demarcación. Teoría es científica si puede ser refutada. Pseudociencia se resguarda para no ser refutada.
-Kuhn: Paradigma científico = marco teórico-metodológico aceptado por comunidad científica. Revolución científica = cuando anomalías acumuladas llevan a sustituir un paradigma por otro.
-Materialismo vs Idealismo: Materialismo = materia es primaria, ideas son producto material. Idealismo = ideas/espíritu son primarias, materia depende de ellas.
-Leibniz: Mónadas = sustancias simples, infinitas, indivisibles, "sin ventanas", constitutivas del universo. Interactúan por armonía preestablecida.
-Spinoza: Panteísmo = Dios y Naturaleza son lo mismo. "Deus sive Natura". Una sola sustancia con infinitos atributos.
-Descartes - Duda metódica: Dudar de todo lo dudoso para alcanzar conocimiento firme. Resultado: "Cogito ergo sum".
-Hegel vs Kant sobre el fenómeno: Para Kant es el límite del conocimiento. Para Hegel es la manifestación histórica del Absoluto.
-Bauman: Modernidad líquida = todo cambia velozmente, nada permanece (relaciones, trabajos, identidades). Incertidumbre y precariedad.
-Derrida: Deconstrucción = mostrar contradicciones internas, oposiciones jerárquicas invertibles y supuestos inestables en textos y conceptos. Los significados nunca son fijos."""
-
-try:
-    client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=st.secrets["groq"]["api_key"])
-except Exception:
-    st.error("Error de configuración: Revisa los Secrets en Streamlit Cloud.")
-    st.stop()
-
-def text_to_speech_web(text):
-    try:
-        tts = gTTS(text=text, lang='es', slow=False)
-        audio_fp = io.BytesIO()
-        tts.write_to_fp(audio_fp)
-        audio_fp.seek(0)
-        return audio_fp
-    except Exception:
-        return None
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-for message in st.session_state.messages:
-    if message["role"] != "system":
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-def procesar_respuesta(user_input):
-    with st.chat_message("user"):
-        st.markdown(user_input)
-    st.session_state.messages.append({"role": "user", "content": user_input})
-
-    with st.chat_message("assistant"):
-        response_placeholder = st.empty()
-        full_response = ""
-        try:
-            mensajes_api = [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.messages
-            
-            # Aquí pasamos la variable 'modelo_elegido' tomada del selector de la barra lateral
-            stream = client.chat.completions.create(model=modelo_elegido, messages=mensajes_api, stream=True)
-            
-            for chunk in stream:
-                if chunk.choices[0].delta.content is not None:
-                    full_response += chunk.choices[0].delta.content
-                    response_placeholder.markdown(full_response + "▌")
-            response_placeholder.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-            if full_response:
-                audio_bytes = text_to_speech_web(full_response)
-                if audio_bytes:
-                    st.audio(audio_bytes, format="audio/mp3", autoplay=True)
-        except Exception as e:
-            st.error(f"Ocurrió un problema: {str(e)}")
-            if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
-                st.session_state.messages.pop()
-
-if prompt := st.chat_input("Consulta a Baymax sobre algún tema del examen, Regina..."):
-    procesar_respuesta(prompt)
+Kant: Noúmeno = cosa en sí, incognoscible. Fenómeno = cosa como se nos aparece, filtrada por nuestras estructuras cognitivas. Juicios
