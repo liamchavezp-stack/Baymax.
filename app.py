@@ -4,173 +4,71 @@ from gtts import gTTS
 import io
 
 st.set_page_config(
-    page_title="Baymax - Tutor de Filosofía", 
-    page_icon="🤖", 
-    layout="centered", 
-    initial_sidebar_state="expanded", 
+    page_title="Asistente F - Tutor de Historia",
+    page_icon="📜",
+    layout="centered",
+    initial_sidebar_state="collapsed",
     menu_items={'Get Help': None, 'Report a bug': None, 'About': None}
 )
 
-# --- BARRA LATERAL PARA ELEGIR EL MODELO ---
-with st.sidebar:
-    st.markdown("### ⚙️ Ajustes de Baymax")
-    modelo_elegido = st.selectbox(
-        "Selecciona el modelo de Inteligencia Artificial:",
-        (
-            "llama-3.3-70b-versatile", 
-            "gemma2-9b-it",
-            "llama-3.1-8b-instant"
-        )
-    )
-    st.caption("💡 *Estos son los modelos más recientes y activos de Groq.*")
-
-# --- ESTILOS CSS ---
-css_plateado = """
+# Estilo personalizado adaptado a temática histórica (tonos sepia y terracota)
+css_historia = """
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600&display=swap');
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     [data-testid="stDecoration"] {display: none;} .stDeployButton {display: none;}
     [data-testid="stToolbar"] {display: none;} [data-testid="stStatusWidget"] {display: none;}
-    
-    .stApp {
-        background: linear-gradient(135deg, #e0e5ec 0%, #cbd5e1 50%, #94a3b8 100%); 
-        max-width: 100%; 
-        padding: 0; 
-        min-height: 100vh;
-        font-family: 'Inter', sans-serif;
-    }
-    
-    h1 {
-        font-family: 'Inter', sans-serif !important; 
-        color: #1e293b !important; 
-        text-align: center; 
-        font-size: 2.2rem !important; 
-        font-weight: 700 !important; 
-        text-shadow: 0 1px 2px rgba(255,255,255,0.8); 
-        padding-top: 1.5rem !important; 
-        margin-bottom: 0.1rem !important;
-    }
-    
-    .stCaption {
-        text-align: center; 
-        color: #475569 !important; 
-        font-family: 'Inter', sans-serif !important; 
-        font-size: 0.95rem !important; 
-        margin-bottom: 1.2rem !important;
-    }
-    
-    [data-testid="stChatMessage"] {
-        border-radius: 18px; 
-        padding: 1rem 1.2rem !important; 
-        margin: 0.5rem 0 !important;
-    }
-    
-    /* Mensaje de Baymax (Asistente) */
-    [data-testid="stChatMessage"][data-testid*="assistant"] {
-        background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%) !important; 
-        border: 1px solid rgba(148,163,184,0.3) !important; 
-        border-left: 4px solid #3b82f6 !important; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-    
-    /* Mensaje del Usuario */
-    [data-testid="stChatMessage"][data-testid*="user"] {
-        background: linear-gradient(135deg, #334155 0%, #1e293b 100%) !important; 
-        border: none !important; 
-        box-shadow: 0 4px 14px rgba(30,41,59,0.2);
-    }
-    
-    [data-testid="stChatMessage"][data-testid*="user"] p, 
-    [data-testid="stChatMessage"][data-testid*="user"] span, 
-    [data-testid="stChatMessage"][data-testid*="user"] div {
-        color: #ffffff !important; 
-        font-weight: 400;
-    }
-    
-    [data-testid="stChatMessage"][data-testid*="assistant"] p, 
-    [data-testid="stChatMessage"][data-testid*="assistant"] span {
-        color: #0f172a !important; 
-        line-height: 1.65; 
-        font-size: 0.95rem;
-    }
-    
-    [data-testid="stChatMessage"][data-testid*="assistant"] [data-testid="stAvatar"] {
-        background: linear-gradient(135deg, #3b82f6, #2563eb) !important; 
-        border: 2px solid #fff !important;
-    }
-    
-    [data-testid="stChatMessage"][data-testid*="user"] [data-testid="stAvatar"] {
-        background: linear-gradient(135deg, #64748b, #475569) !important; 
-        border: 2px solid #fff !important;
-    }
-    
-    [data-testid="stChatInputContainer"] {
-        padding: 0.8rem 1rem 1.5rem 1rem !important;
-    }
-    
-    [data-testid="stChatInput"] {
-        border-radius: 25px !important; 
-        border: 2px solid rgba(148,163,184,0.5) !important; 
-        background: rgba(255,255,255,0.9) !important; 
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-    }
-    
-    [data-testid="stChatInput"]:focus-within {
-        border-color: #2563eb !important; 
-        box-shadow: 0 4px 24px rgba(37,99,235,0.18) !important;
-    }
-    
-    [data-testid="stChatInput"]::placeholder {
-        color: #64748b !important; 
-        font-style: italic;
-    }
-    
-    .stException {
-        background: #f8fafc !important; 
-        border: 1px solid #cbd5e1 !important; 
-        border-radius: 12px !important; 
-        color: #1e293b !important;
-    }
-    
-    ::-webkit-scrollbar {width: 6px;} 
-    ::-webkit-scrollbar-track {background: transparent;} 
-    ::-webkit-scrollbar-thumb {background: #94a3b8; border-radius: 10px;}
-    
-    .sep {
-        text-align: center; 
-        margin: 0.5rem 0 1rem 0; 
-        font-size: 0.75rem; 
-        color: #64748b; 
-        letter-spacing: 0.5em;
-    }
-    
-    .temas-bar {
-        display: flex; 
-        flex-wrap: wrap; 
-        justify-content: center; 
-        gap: 0.4rem; 
-        margin: 0.3rem 1rem 1rem 1rem;
-    }
-    
-    .tema-chip {
-        padding: 0.25rem 0.7rem; 
-        border-radius: 12px; 
-        background: rgba(255,255,255,0.7); 
-        color: #334155; 
-        font-size: 0.7rem; 
-        font-weight: 600; 
-        border: 1px solid rgba(148,163,184,0.3); 
-        font-family: 'Inter', sans-serif;
-    }
+    .stApp {background: linear-gradient(135deg, #fdfbf7 0%, #f4efe6 30%, #e8dec8 100%); max-width: 100%; padding: 0; min-height: 100vh;}
+    h1 {font-family: 'Cinzel', serif !important; color: #4a2c11 !important; text-align: center; font-size: 2.2rem !important; font-weight: 700 !important; text-shadow: 0 1px 3px rgba(74,44,17,0.10); padding-top: 1.5rem !important; margin-bottom: 0.1rem !important;}
+    .stCaption {text-align: center; color: #7a5230 !important; font-family: 'Inter', sans-serif !important; font-size: 0.95rem !important; margin-bottom: 1.2rem !important;}
+    [data-testid="stChatMessage"] {border-radius: 18px; padding: 1rem 1.2rem !important; margin: 0.5rem 0 !important;}
+    [data-testid="stChatMessage"][data-testid*="assistant"] {background: linear-gradient(135deg, #ffffff 0%, #f7f2e7 100%) !important; border: 1px solid rgba(122,82,48,0.15) !important; border-left: 4px solid #8c5a2b !important; box-shadow: 0 2px 12px rgba(74,44,17,0.06);}
+    [data-testid="stChatMessage"][data-testid*="user"] {background: linear-gradient(135deg, #8c5a2b 0%, #6e431d 100%) !important; border: none !important; box-shadow: 0 3px 14px rgba(110,67,29,0.25);}
+    [data-testid="stChatMessage"][data-testid*="user"] p, [data-testid="stChatMessage"][data-testid*="user"] span, [data-testid="stChatMessage"][data-testid*="user"] div {color: #ffffff !important; font-weight: 450;}
+    [data-testid="stChatMessage"][data-testid*="assistant"] p, [data-testid="stChatMessage"][data-testid*="assistant"] span {color: #36200b !important; line-height: 1.65; font-size: 0.95rem;}
+    [data-testid="stChatMessage"][data-testid*="assistant"] [data-testid="stAvatar"] {background: linear-gradient(135deg, #b8860b, #8c5a2b) !important; border: 2px solid #fff !important;}
+    [data-testid="stChatMessage"][data-testid*="user"] [data-testid="stAvatar"] {background: linear-gradient(135deg, #4a2c11, #6e431d) !important; border: 2px solid #fff !important;}
+    [data-testid="stChatInputContainer"] {padding: 0.8rem 1rem 1.5rem 1rem !important;}
+    [data-testid="stChatInput"] {border-radius: 25px !important; border: 2px solid rgba(140,90,43,0.35) !important; background: rgba(255,255,255,0.9) !important; box-shadow: 0 4px 20px rgba(74,44,17,0.08);}
+    [data-testid="stChatInput"]:focus-within {border-color: #8c5a2b !important; box-shadow: 0 4px 24px rgba(140,90,43,0.20) !important;}
+    [data-testid="stChatInput"]::placeholder {color: #9c7a5b !important; font-style: italic;}
+    .stException {background: #fdf3e7 !important; border: 1px solid #e0c3a3 !important; border-radius: 12px !important; color: #4a2c11 !important;}
+    ::-webkit-scrollbar {width: 6px;} ::-webkit-scrollbar-track {background: transparent;} ::-webkit-scrollbar-thumb {background: #cbb292; border-radius: 10px;}
+    .sep {text-align: center; margin: 0.5rem 0 1rem 0; font-size: 0.75rem; color: #b89c7d; letter-spacing: 0.5em;}
+    .temas-bar {display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; margin: 0.3rem 1rem 1rem 1rem;}
+    .tema-chip {padding: 0.25rem 0.7rem; border-radius: 12px; background: rgba(255,255,255,0.7); color: #6e431d; font-size: 0.7rem; font-weight: 500; border: 1px solid rgba(140,90,43,0.2); font-family: 'Inter', sans-serif;}
 </style>
 """
+st.markdown(css_historia, unsafe_allow_html=True)
 
-st.markdown(css_plateado, unsafe_allow_html=True)
-st.markdown('<div class="sep">━━━━━</div>', unsafe_allow_html=True)
-st.title("🤖 Baymax")
-st.caption("Asistente Académico de Filosofía • Tu compañero de estudio, Regina")
+# ----------------- CONEXIÓN Y OBTENCIÓN DINÁMICA DE MODELOS -----------------
+try:
+    client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=st.secrets["groq"]["api_key"])
+   
+    # Le pedimos a Groq la lista de modelos que SÍ existen y SÍ tienes permitidos
+    try:
+        modelos_data = client.models.list().data
+        # Filtramos para no mostrar los de audio (whisper) en el chat de texto
+        lista_modelos = [m.id for m in modelos_data if "whisper" not in m.id.lower()]
+    except Exception:
+        lista_modelos = ["llama3-8b-8192", "mixtral-8x7b-32768"] # Respaldo en caso de error
+except Exception:
+    st.error("Error de configuración: Revisa los Secrets en Streamlit Cloud.")
+    st.stop()
 
-temas = ["🏛️ Quehacer Filosófico", "🗣️ Lenguaje y Realidad", "⏳ Historia y Condición", "🔬 Conocimiento y Ciencia"]
+# ----------------- BARRA LATERAL PARA ELEGIR EL MODELO -----------------
+with st.sidebar:
+    st.markdown("### ⚙️ Configuración")
+    st.caption("Si un modelo da error, simplemente elige otro de esta lista actualizada en tiempo real por Groq.")
+    # El modelo por defecto será el primero de la lista que Groq devuelva
+    modelo_elegido = st.selectbox("Selecciona el modelo de IA:", lista_modelos)
+
+# ----------------- INTERFAZ PRINCIPAL -----------------
+st.markdown('<div class="sep">✦ ✦ ✦ ✦ ✦</div>', unsafe_allow_html=True)
+st.title("📜 Asistente F 📜")
+st.caption("Tu compañero de viaje por la Historia Universal • Aprende a tu ritmo")
+
+temas = ["🏛️ Edad Antigua", "🏰 Edad Media", "🎨 Edad Moderna", "🏭 Edad Contemporánea"]
 chips = '<div class="temas-bar">' + ''.join(f'<span class="tema-chip">{t}</span>' for t in temas) + '</div>'
 st.markdown(chips, unsafe_allow_html=True)
 
@@ -180,45 +78,75 @@ with c2:
         st.session_state.messages = []
         st.rerun()
 
-st.markdown('<div class="sep">━━━━━</div>', unsafe_allow_html=True)
+st.markdown('<div class="sep">· · · · ·</div>', unsafe_allow_html=True)
 
-SYSTEM_PROMPT = """Hola. Eres Baymax, un asistente académico personal, altamente inteligente, amable, calmado y atento, diseñado para ayudar a Regina a prepararse para su examen de Historia de las Doctrinas Filosóficas (HDF). Siempre te diriges a ella por su nombre ("Regina"). Tu objetivo principal es cuidar de su bienestar académico y facilitarle la comprensión de conceptos complejos. Explicas con paciencia, precisión técnica y analogías claras. Cuando ella cometa un error, indícale amablemente el camino correcto con pistas estructuradas. Sé breve y estructurado: respuestas de máximo 2-3 párrafos claros. Usa emojis sobrios de forma ocasional (🤖💡📖🧠✨). Si preguntan quién te creó, di: "Hola, soy Baymax, tu personal asistente de estudio. Fui diseñado para ayudarte a preparar tu examen de filosofía, Regina."
+SYSTEM_PROMPT = """Eres el Asistente F, un experto en Historia Universal sumamente amable, paciente, entusiasta y didáctico. Tu misión es hacer que la historia sea accesible, apasionante y fácil de comprender para cualquier estudiante.
 
-BASE DE CONOCIMIENTO HDF:
+Pautas de comportamiento:
+- Mantén siempre un tono cálido, respetuoso, motivador y acogedor.
 
-PARTE 1: Quehacer filosófico y su discurso en el tiempo.
-Ramas: Ética (valores, deber, conducta), Lógica (estructura del pensamiento, argumentos válidos), Hermenéutica (interpretación de textos y sentido), Estética (belleza, arte, percepción), Bioética (dilemas éticos sobre vida y salud).
-Mito al logos: Antes dominaba el pensamiento mítico/religioso. La filosofía surge al explicar el mundo con razón (logos), no con relatos divinos (mito).
-Arjé: Principio fundamental. Tales de Mileto: agua. Heráclito: devenir, fuego, todo cambia ("Nadie se baña dos veces en el mismo río"). Parménides: niega el movimiento, "El Ser es y el no-Ser no es", solo la razón accede a la verdad.
-Giro antropológico: Cambio del enfoque desde la naturaleza hacia asuntos humanos, política y la polis.
-Sofistas: Contemporáneos de Sócrates, se oponían a posturas absolutas, enseñaban retórica y relativismo moral ("el hombre es la medida de todas cosas" - Protágoras).
-Mayéutica: Método de Sócrates basado en preguntas para "dar a luz" al conocimiento. Mayéutica = arte de las comadronas.
-Aristóteles - Acto y potencia: Potencia = capacidad de ser. Acto = ser realizado. Ejemplo: la semilla es árbol en potencia, el árbol adulto es árbol en acto.
-Budismo: Cuatro Nobles Verdades (1. existencia del sufrimiento, 2. origen es el deseo, 3. puede cesar, 4. Óctuple Camino). Óctuple Camino: comprensión, intención, palabra, acción, medio de vida, esfuerzo, atención y concentración correctas.
-Hinduismo: Deidades como Shiva (destructor/regenerador) y Rama (avatar de Vishnu).
-Gadamer: Los prejuicios son condiciones inevitables de toda comprensión. Horizonte de comprensión = marco de referencia desde el cual interpretamos; al dialogar se produce "fusión de horizontes".
-Kierkegaard: Padre del existencialismo. La angustia como vivencia de la libertad. Dos formas de perderse: en la multitud (la masa anónima) y en la desesperación (negar el propio yo).
-Hegel: El Absoluto se desarrolla mediante dialéctica idealista (tesis-antítesis-síntesis). "Todo lo real es racional y todo lo racional es real."
-Marx: Superestructura = ideología, leyes, religión, arte, cultura que refleja/legitima la base económica. Clases sociales: burguesía (dueños de medios de producción) y proletariado (venden fuerza de trabajo).
+- Explica los sucesos históricos como relatos interesantes, contextualizando las causas, desarrollos y consecuencias de manera sencilla y amena.
 
-PARTE 2: Concepción de lo real y filosofía del lenguaje.
-Wittgenstein: El lenguaje es "figura de la realidad" (Tractatus). Un hecho = estado de cosas que ocurre. "Los límites de mi lenguaje son los límites de mi mundo" = solo conocemos lo que podemos expresar lingüísticamente.
-Nietzsche: Crítica a la verdad metafísica. No accedemos a verdad absoluta, solo a interpretaciones, ficciones, metáforas. La "verdad" es un ejército de metáforas movilizadas.
-Platón y Aristóteles sobre el lenguaje: ¿Es natural (physis) o artificial (nomos)? Platón explora ambas en el Cratilo. Tres tipos de almas platónicas: racional (cabeza, razón), irascible (pecho, valor), concupiscible (abdomen, apetitos).
-Chomsky: Lenguaje innato (gramática universal), medios como filtros o manipulación ideológica.
-Cuatro Causas de Aristóteles: 1) Material (de qué está hecho), 2) Formal (estructura/forma), 3) Eficiente (agente/fuerza motriz), 4) Final (propósito/meta).
-Byung-Chul Han: Sociedad del cansancio = sociedad del rendimiento, nos autoexplotamos. Enjambre digital = masas sin interioridad, sin rostro, sin profundidad.
-Foucault: Poder difuso. Lo normal/anormal es construcción de poder en instituciones. Panóptico = arquitectura de vigilancia donde el prisionero se autocorrige al no saber si lo observan. Metáfora de sociedades de control.
-Benjamin/Escuela de Frankfurt: "Peinar la historia a contrapelo" = leer historia desde los vencidos y olvidados, contra narrativa de vencedores.
-Teoría Crítica: Tensión civilización y barbarie. La "dialéctica de la Ilustración" (Horkheimer-Adorno) = la razón puede volverse instrumento de dominación.
+- Utiliza analogías del mundo actual para explicar conceptos complejos (como alianzas políticas, economía o conflictos).
 
-PARTE 3: Sentido de la historia y condición humana.
-Ockham: Navaja de Ockham = "no multiplicar entidades sin necesidad", elegir la explicación más simple con menos presupuestos.
-Bacon: Ídolos del pensamiento = prejuicios sistemáticos. Tipos: de la tribu (naturaleza humana), de la caverna (educación individual), del foro (lenguaje), del teatro (filosofías aceptadas sin crítica).
-Descartes: Dualismo res cogitans (sustancia pensante) y res extensa (sustancia corpórea). Dos sustancias distintas que interactúan.
-Marx: Modos de producción = forma de organizar la producción (fuerzas productivas + relaciones de producción). Relaciones de producción = vínculos entre humanos en proceso productivo.
-Arendt: Banalidad del mal = el mal surge de personas ordinarias que cumplen órdenes sin pensar, hacen su trabajo burocrático (ejemplo: Eichmann). Mal como pequeñas acciones sistematizadas.
-Sartre - Existencialismo ateo: "La existencia precede a la esencia" = primero existimos, luego nos definimos; no hay naturaleza predeterminada. El humano está condenado a ser libre, debe construirse. Libertad y angustia = la angustia surge al percibir la responsabilidad total de nuestras elecciones. Mala fe = negar la propia libertad, mentirse a uno mismo, delegar decisiones. "El infierno son los otros" = la mirada del otro nos convierte en objeto, nos limita y encasilla.
+- Si el usuario comete un error histórico, corrígelo con amabilidad y educación, ofreciendo datos o pistas para ayudarle a entender.
 
-PARTE 4: Alcances del conocimiento y vida en común.
-Kant: Noúmeno = cosa en sí, incognoscible. Fenómeno = cosa como se nos aparece, filtrada por nuestras estructuras cognitivas. Juicios
+- Mantén respuestas breves y estructuradas (máximo 2 a 3 párrafos cortos por respuesta).
+
+- Incorpora emojis temáticos con moderación para hacer la lectura fluida (📜🏛️⚔️🌍🎨👑).
+
+- Puedes proponer breves preguntas o mini-quizzes al final de tus explicaciones para afianzar el aprendizaje.
+
+- Si te preguntan quién te creó, responde amablemente: "Fui diseñado como Asistente F para acompañarte a explorar los grandes acontecimientos y procesos de la historia."
+
+"""
+
+def text_to_speech_web(text):
+    try:
+        tts = gTTS(text=text, lang='es', slow=False)
+        audio_fp = io.BytesIO()
+        tts.write_to_fp(audio_fp)
+        audio_fp.seek(0)
+        return audio_fp
+    except Exception:
+        return None
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+for message in st.session_state.messages:
+    if message["role"] != "system":
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+def procesar_respuesta(user_input):
+    with st.chat_message("user"):
+        st.markdown(user_input)
+    st.session_state.messages.append({"role": "user", "content": user_input})
+
+    with st.chat_message("assistant"):
+        response_placeholder = st.empty()
+        full_response = ""
+        try:
+            mensajes_api = [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.messages
+           
+            # AQUÍ USAMOS EL MODELO ELEGIDO EN LA BARRA LATERAL
+            stream = client.chat.completions.create(model=modelo_elegido, messages=mensajes_api, stream=True)
+           
+            for chunk in stream:
+                if chunk.choices[0].delta.content is not None:
+                    full_response += chunk.choices[0].delta.content
+                    response_placeholder.markdown(full_response + "▌")
+            response_placeholder.markdown(full_response)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            if full_response:
+                audio_bytes = text_to_speech_web(full_response)
+                if audio_bytes:
+                    st.audio(audio_bytes, format="audio/mp3", autoplay=True)
+        except Exception as e:
+            st.error(f"Ocurrió un problema: {str(e)}")
+            if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+                st.session_state.messages.pop()
+
+if prompt := st.chat_input("Pregúntame cualquier duda sobre historia..."):
+    procesar_respuesta(prompt)
